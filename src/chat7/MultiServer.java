@@ -8,10 +8,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -19,9 +22,10 @@ import java.util.Scanner;
 
 public class MultiServer {
 	
-	protected Connection con;
-	protected Statement stmt;
-	protected ResultSet rs;
+	static Connection con;
+	static PreparedStatement psmt;
+	static String ORACLE_DRIVER = "oracle.jdbc.OracleDriver";
+	static String ORALE_URL = "jdbc:oracle:thin://@localhost:1521:orcl";
 	
 	static ServerSocket serverSocket = null;
 	static Socket socket = null;
@@ -34,6 +38,20 @@ public class MultiServer {
 		clientMap = new HashMap<String,PrintWriter>();
 		//HashMap동기화 설정. 쓰레드가 사용자정보에 동시에 접근하는것을 차단한다.
 		Collections.synchronizedMap(clientMap);
+		
+		try
+		{
+			String user = "kosmo";
+			String pw = "1234";
+
+			Class.forName(ORACLE_DRIVER);
+			con = DriverManager.getConnection(ORALE_URL, user, pw);
+			System.out.println("DB접속 성공");
+		} catch (Exception e)
+		{	
+			System.out.println("DB접속 실패");
+			e.printStackTrace();
+		}
 	}
 	
 	///서버의 초기화를 담당할 메소드
@@ -133,7 +151,6 @@ public class MultiServer {
 		@Override
 		public void run() {
 			
-			
 			/*
 			 시퀀스,대화명,대화내용,현재시간 출력해야함
 			 */
@@ -145,26 +162,6 @@ public class MultiServer {
 			
 			try {
 				
-				try {
-					//드라이버 로드
-					Class.forName("oracle.jdbc.OracleDriver");
-					//커넥션(매개변수로 전달된 id, pw를 통해 연결)
-					con = DriverManager.getConnection(
-							"jdbc:oracle:thin://@localhost:1521:orcl", 
-							"kosmo", "1234");
-					System.out.println("오라클 DB 연결성공");
-				}
-				catch (ClassNotFoundException e) {
-					System.out.println("오라클 드라이버 로딩 실패");
-					e.printStackTrace();
-				}
-				catch (SQLException e) {
-					System.out.println("DB 연결 실패");
-					e.printStackTrace();
-				}
-				catch (Exception e) {
-					System.out.println("알수 없는 예외발생");
-				}
 				//클라이언트의 이름을 읽어와서 저장
 				name = in.readLine();
 				
@@ -191,6 +188,33 @@ public class MultiServer {
 					//여기서 DB처리하면 내용 저장가능
 					System.out.println(name +" >> "+s);
 					sendAllMsg(name,s);
+					
+					try {
+						String query = "INSERT INTO chating_tb VALUES (seq_chating.NEXTVAL, ?, ?, ?)";
+						psmt = con.prepareStatement(query);
+						psmt.setString(1, name);
+						psmt.setString(2, s);
+						SimpleDateFormat format = new SimpleDateFormat ("yyyy-MM-dd HH:mm:ss");
+						Date time = new Date();
+						String sdate = format.format(time);
+						psmt.setString(3, sdate);
+						psmt.executeUpdate();
+						System.out.println("DB저장 성공");
+					}
+					catch(Exception e) {
+						System.out.println("DB저장 실패");
+						e.printStackTrace();
+					}
+					finally {
+						if(psmt != null) {
+							try {
+								psmt.close();
+							}
+							catch(SQLException e) {
+								e.printStackTrace();
+							}
+						}
+					}
 				}
 			}
 			catch(Exception e) {
