@@ -4,8 +4,11 @@ package chat7;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -71,7 +74,7 @@ public class MultiServer {
 		while(true) {
 			socket = serverSocket.accept();
 			/*
-			 클라이언트의 메세지를 모든 클라이언틍게 전달하기 위한
+			 클라이언트의 메세지를 모든 클라이언트에게 전달하기 위한
 			 쓰레드 생성 및 start.
 			 */
 			Thread mst = new MultiServerT(socket);
@@ -101,13 +104,24 @@ public class MultiServer {
 	public void sendAllMsg(String name,String msg) {
 		//Map에 저장된 객체의 키값(이름)을 먼저 얻어온다.
 		Iterator<String> it = clientMap.keySet().iterator();
+//		PrintWriter out = null;
+		
+		//서버로 한글을 보낼때
+//		try {
+//			out.println(URLEncoder.encode(msg,"UTF-8"));
+//		}
+//			catch(UnsupportedEncodingException e1) {}
 		
 		//저장된 객체(클라이언트)의 갯수만큼 반복
 		while(it.hasNext()) {
+			
 			try {
 				//각 클라이언트의 PrintWriter객체를 얻어온다.
 				PrintWriter it_out = 
 						(PrintWriter) clientMap.get(it.next());
+				
+//				if(.equals(""))
+//					it_out.println(URLEncoder.encode(msg,"UTF-8"));
 				
 				//클라이언트에게 메세지를 전달한다.
 				/*
@@ -140,7 +154,7 @@ public class MultiServer {
 			try {
 				out = new PrintWriter(this.socket.getOutputStream(),true);
 				in = new BufferedReader(new
-						InputStreamReader(this.socket.getInputStream()));
+						InputStreamReader(this.socket.getInputStream(),"UTF-8"));
 			}
 			catch(Exception e) {
 				System.out.println("예외:"+e);
@@ -165,6 +179,8 @@ public class MultiServer {
 				//클라이언트의 이름을 읽어와서 저장
 				name = in.readLine();
 				
+				name = URLDecoder.decode(name,"UTF-8");
+				
 				//접속한 클라이언트에게 새로운 사용자의 입장을 알림.
 				//접속자를 제외한 나머지 클라이언트만 입장메세지를 받는다.
 				//왜냐하면 입장 문구가 나오고 clientMap.put(name, out); 에 저장되기 때문
@@ -182,8 +198,8 @@ public class MultiServer {
 				
 				while(in != null) {
 					s = in.readLine();
+					s = URLDecoder.decode(s,"UTF-8");
 					if(s == null) break;
-					
 					
 					//여기서 DB처리하면 내용 저장가능
 					System.out.println(name +" >> "+s);
