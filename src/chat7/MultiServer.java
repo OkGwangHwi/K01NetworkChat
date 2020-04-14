@@ -16,12 +16,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
+
+import javax.print.attribute.standard.MediaSize.Other;
 
 public class MultiServer {
 	
@@ -104,13 +107,8 @@ public class MultiServer {
 	public void sendAllMsg(String name,String msg) {
 		//Map에 저장된 객체의 키값(이름)을 먼저 얻어온다.
 		Iterator<String> it = clientMap.keySet().iterator();
-//		PrintWriter out = null;
 		
-		//서버로 한글을 보낼때
-//		try {
-//			out.println(URLEncoder.encode(msg,"UTF-8"));
-//		}
-//			catch(UnsupportedEncodingException e1) {}
+		
 		
 		//저장된 객체(클라이언트)의 갯수만큼 반복
 		while(it.hasNext()) {
@@ -119,9 +117,6 @@ public class MultiServer {
 				//각 클라이언트의 PrintWriter객체를 얻어온다.
 				PrintWriter it_out = 
 						(PrintWriter) clientMap.get(it.next());
-				
-//				if(.equals(""))
-//					it_out.println(URLEncoder.encode(msg,"UTF-8"));
 				
 				//클라이언트에게 메세지를 전달한다.
 				/*
@@ -140,6 +135,41 @@ public class MultiServer {
 			}
 		}
 	}
+	
+	public String showAllClient(String name) {
+//		Collection<String> keys = clientMap.keySet();
+//		for(String key : keys) {
+//			System.out.println(key);
+//		}
+		StringBuilder sb = new StringBuilder("===접속자목록===\r\n");
+		Iterator<String> it = clientMap.keySet().iterator();
+		
+		while(it.hasNext()) {
+			try {
+				String key = (String)it.next();
+				
+				if(key.equals(name)) {
+					key += "(*)";
+				}
+				sb.append(key+"\r\n");
+			}
+			catch(Exception e) {
+				System.out.println("예외:"+e);
+			}
+		}
+		sb.append(clientMap.size()+"명 접속중\r\n");
+		return sb.toString();
+	}
+	
+	public String showAllClient() {
+		return showAllClient("");
+	}
+	
+	
+	public void whisper() {
+		
+	}
+	
 	//내부클래스
 	class MultiServerT extends Thread{
 		
@@ -160,7 +190,6 @@ public class MultiServer {
 				System.out.println("예외:"+e);
 			}
 		}
-		
 		
 		@Override
 		public void run() {
@@ -202,8 +231,22 @@ public class MultiServer {
 					if(s == null) break;
 					
 					//여기서 DB처리하면 내용 저장가능
-					System.out.println(name +" >> "+s);
-					sendAllMsg(name,s);
+					
+					if(s.charAt(0)=='/') {
+						if(s.trim().equals("/list")) {
+							//key값만 출력하기
+							out.println(showAllClient());
+						}
+						else if()) {
+							
+						}
+						else {
+							System.out.println("잘못된 명령어입니다.");
+						}
+					}
+					else {
+						sendAllMsg(name,s);
+					}
 					
 					try {
 						String query = "INSERT INTO chating_tb VALUES (seq_chating.NEXTVAL, ?, ?, ?)";
@@ -260,5 +303,7 @@ public class MultiServer {
 				}
 			}
 		}
+		
+		
 	}
 }
