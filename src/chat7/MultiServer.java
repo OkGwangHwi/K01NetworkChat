@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -23,6 +24,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 import javax.print.attribute.standard.MediaSize.Other;
 
@@ -36,7 +39,8 @@ public class MultiServer {
 	static ServerSocket serverSocket = null;
 	static Socket socket = null;
 	//클라이언트 정보 저장을 위한 Map컬랙션 정의
-	Map<String,PrintWriter> clientMap;
+	HashMap<String,PrintWriter> clientMap;
+	HashMap<String, String> whisper;
 	
 	///생성자
 	public MultiServer() {
@@ -109,7 +113,6 @@ public class MultiServer {
 		Iterator<String> it = clientMap.keySet().iterator();
 		
 		
-		
 		//저장된 객체(클라이언트)의 갯수만큼 반복
 		while(it.hasNext()) {
 			
@@ -136,38 +139,41 @@ public class MultiServer {
 		}
 	}
 	
-	public String showAllClient(String name) {
-//		Collection<String> keys = clientMap.keySet();
-//		for(String key : keys) {
-//			System.out.println(key);
-//		}
-		StringBuilder sb = new StringBuilder("===접속자목록===\r\n");
-		Iterator<String> it = clientMap.keySet().iterator();
-		
-		while(it.hasNext()) {
-			try {
-				String key = (String)it.next();
-				
-				if(key.equals(name)) {
-					key += "(*)";
-				}
-				sb.append(key+"\r\n");
-			}
-			catch(Exception e) {
-				System.out.println("예외:"+e);
-			}
+	public void whisperUser(String name,String msg) {
+		ArrayList<String> arrList = stringDiv(msg);
+		PrintWriter it_out = (PrintWriter) clientMap.get(arrList.get(1));
+		int count = 2;
+		it_out.print(name + " >> " + arrList.get(1) + " : ");
+		while (arrList.size() > count)
+		{
+
+			it_out.print(arrList.get(count) + " ");
+			count++;
 		}
-		sb.append(clientMap.size()+"명 접속중\r\n");
-		return sb.toString();
+		it_out.println();
 	}
 	
-	public String showAllClient() {
-		return showAllClient("");
-	}
-	
-	
-	public void whisper() {
+	//내용 분리
+	public ArrayList<String> stringDiv(String msg){
 		
+		StringTokenizer str = new StringTokenizer(msg);
+		ArrayList<String> arrList = new ArrayList<>();
+		while (str.hasMoreElements()) {
+			arrList.add(str.nextToken());
+		}
+		return arrList;
+	}
+	
+	public void showAllClient(String name) {
+		PrintWriter it_out = (PrintWriter) clientMap.get(name);
+
+		Set<String> key = clientMap.keySet();
+		it_out.println("현재 접속자");
+		for (Iterator<String> iterator = key.iterator(); iterator.hasNext();)
+		{
+			String keyName = (String) iterator.next();
+			it_out.println(keyName);
+		}
 	}
 	
 	//내부클래스
@@ -231,22 +237,7 @@ public class MultiServer {
 					if(s == null) break;
 					
 					//여기서 DB처리하면 내용 저장가능
-					
-					if(s.charAt(0)=='/') {
-						if(s.trim().equals("/list")) {
-							//key값만 출력하기
-							out.println(showAllClient());
-						}
-						else if()) {
-							
-						}
-						else {
-							System.out.println("잘못된 명령어입니다.");
-						}
-					}
-					else {
-						sendAllMsg(name,s);
-					}
+					System.out.println(name +" >> "+s);
 					
 					try {
 						String query = "INSERT INTO chating_tb VALUES (seq_chating.NEXTVAL, ?, ?, ?)";
@@ -272,6 +263,19 @@ public class MultiServer {
 							catch(SQLException e) {
 								e.printStackTrace();
 							}
+						}
+					}
+					
+					if(s.indexOf("/") != 0) {
+						sendAllMsg(name,s);
+					}
+					else if(s.indexOf("/") == 0){
+						if(s.indexOf("/list") != -1) {
+							showAllClient(name);
+						}
+						else if(s.indexOf("/to") != -1){
+							ArrayList<String> arrList = stringDiv(s);
+							whisperUser(name, s);
 						}
 					}
 				}
@@ -303,7 +307,5 @@ public class MultiServer {
 				}
 			}
 		}
-		
-		
 	}
 }
