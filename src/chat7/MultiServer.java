@@ -27,8 +27,6 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import javax.print.attribute.standard.MediaSize.Other;
-
 public class MultiServer {
 	
 	static Connection con;
@@ -112,9 +110,14 @@ public class MultiServer {
 		//Map에 저장된 객체의 키값(이름)을 먼저 얻어온다.
 		Iterator<String> it = clientMap.keySet().iterator();
 		
+//		ArrayList<String> arrList = stringDiv(msg);
+//		//whisper에 저장된 
+//		Iterator<String> list = whisper.values().iterator();
 		
 		//저장된 객체(클라이언트)의 갯수만큼 반복
 		while(it.hasNext()) {
+			
+			
 			
 			try {
 				//각 클라이언트의 PrintWriter객체를 얻어온다.
@@ -126,6 +129,8 @@ public class MultiServer {
 				 매개변수 name이 있는 경우에는 이름+메세지
 				 없는경우에는 메세지만 클라이언트로 전달한다.
 				 */
+
+
 				if(name.equals("")) {
 					it_out.println(msg);
 				}
@@ -139,25 +144,39 @@ public class MultiServer {
 		}
 	}
 	
+	//고정 귓속말
+	public void whisperfix(String name,String msg) {
+		System.out.println("귓속말이 고정되었습니다.");
+		ArrayList<String> arrList = stringDiv(msg);
+		PrintWriter it_out = (PrintWriter) clientMap.get(arrList.get(1));
+		int count = 2;
+		
+		it_out.print(name + " 님이 " + arrList.get(1) + " 에게 : ");
+		it_out.print(arrList.get(count) + " ");//대화내용
+		
+		it_out.println();
+	}
+	
+	//1회용 귓
 	public void whisperUser(String name,String msg) {
 		ArrayList<String> arrList = stringDiv(msg);
 		PrintWriter it_out = (PrintWriter) clientMap.get(arrList.get(1));
 		int count = 2;
-		it_out.print(name + " >> " + arrList.get(1) + " : ");
-		while (arrList.size() > count)
-		{
-
-			it_out.print(arrList.get(count) + " ");
-			count++;
-		}
+		
+		it_out.print(name + " 님이 " + arrList.get(1) + " 에게 : ");
+		it_out.print(arrList.get(count) + " ");//대화내용
+		
 		it_out.println();
+		
 	}
 	
 	//내용 분리
 	public ArrayList<String> stringDiv(String msg){
 		
-		StringTokenizer str = new StringTokenizer(msg);
 		ArrayList<String> arrList = new ArrayList<>();
+		
+		StringTokenizer str = new StringTokenizer(msg);
+		
 		while (str.hasMoreElements()) {
 			arrList.add(str.nextToken());
 		}
@@ -165,14 +184,35 @@ public class MultiServer {
 	}
 	
 	public void showAllClient(String name) {
+		
 		PrintWriter it_out = (PrintWriter) clientMap.get(name);
 
 		Set<String> key = clientMap.keySet();
-		it_out.println("현재 접속자");
-		for (Iterator<String> iterator = key.iterator(); iterator.hasNext();)
+		Iterator<String> it = key.iterator();
+		it_out.println("===접속자 리스트===");
+		while(it.hasNext())
 		{
-			String keyName = (String) iterator.next();
-			it_out.println(keyName);
+			String nameList = (String) it.next();
+			it_out.println(nameList);
+		}
+	}
+	
+	//명령문 종류 확인
+	public void check(String name,String msg) {
+		
+		ArrayList<String> arrList = stringDiv(msg);
+		
+		if(msg.indexOf("/list") != -1) {
+			showAllClient(name);
+		}
+		else if(msg.indexOf("/to") != -1){
+			if(arrList.size() == 3) {
+				whisperUser(name, msg);
+			}
+			else if(arrList.size() == 2) {
+				whisperfix(name, msg);
+			}
+			
 		}
 	}
 	
@@ -270,13 +310,7 @@ public class MultiServer {
 						sendAllMsg(name,s);
 					}
 					else if(s.indexOf("/") == 0){
-						if(s.indexOf("/list") != -1) {
-							showAllClient(name);
-						}
-						else if(s.indexOf("/to") != -1){
-							ArrayList<String> arrList = stringDiv(s);
-							whisperUser(name, s);
-						}
+						check(name, s);
 					}
 				}
 			}
