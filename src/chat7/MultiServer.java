@@ -38,7 +38,7 @@ public class MultiServer {
 	static Socket socket = null;
 	//클라이언트 정보 저장을 위한 Map컬랙션 정의
 	HashMap<String,PrintWriter> clientMap;
-	HashMap<String, String> whisper;
+	HashMap<String,String> whisper;
 	
 	///생성자
 	public MultiServer() {
@@ -110,10 +110,6 @@ public class MultiServer {
 		//Map에 저장된 객체의 키값(이름)을 먼저 얻어온다.
 		Iterator<String> it = clientMap.keySet().iterator();
 		
-//		ArrayList<String> arrList = stringDiv(msg);
-//		//whisper에 저장된 
-//		Iterator<String> list = whisper.values().iterator();
-		
 		//저장된 객체(클라이언트)의 갯수만큼 반복
 		while(it.hasNext()) {
 			
@@ -144,16 +140,16 @@ public class MultiServer {
 		}
 	}
 	
+	
 	//고정 귓속말
 	public void whisperfix(String name,String msg) {
 		System.out.println("귓속말이 고정되었습니다.");
 		ArrayList<String> arrList = stringDiv(msg);
-		PrintWriter it_out = (PrintWriter) clientMap.get(arrList.get(1));
+		PrintWriter it_out = (PrintWriter) clientMap.get(name);
 		int count = 2;
 		
 		it_out.print(name + " 님이 " + arrList.get(1) + " 에게 : ");
 		it_out.print(arrList.get(count) + " ");//대화내용
-		
 		it_out.println();
 	}
 	
@@ -165,7 +161,6 @@ public class MultiServer {
 		
 		it_out.print(name + " 님이 " + arrList.get(1) + " 에게 : ");
 		it_out.print(arrList.get(count) + " ");//대화내용
-		
 		it_out.println();
 		
 	}
@@ -210,6 +205,9 @@ public class MultiServer {
 				whisperUser(name, msg);
 			}
 			else if(arrList.size() == 2) {
+				if(whisper.containsKey(name)!=true) {
+					whisper.put(name, msg);
+				}
 				whisperfix(name, msg);
 			}
 			
