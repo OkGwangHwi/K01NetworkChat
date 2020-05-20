@@ -67,6 +67,10 @@ public class MultiServer {
 				if(s==null) {
 					break;
 				}
+				if(s.indexOf("광고") != -1) {
+					System.out.println("금지단어이므로 출력되지 않습니다.");
+					return;
+				}
 				///읽어온 메세지를 콘솔에 출력하고....
 				///여기서 DB처리하면 내용 저장가능
 				System.out.println(name +" ==> "+s);
